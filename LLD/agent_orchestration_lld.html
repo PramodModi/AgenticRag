@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Agent Orchestration Framework — Complete LLD</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #0d0f14;
+  --surface:   #151820;
+  --surface2:  #1c2030;
+  --border:    #2a2f42;
+  --border2:   #353c52;
+  --text:      #e2e6f0;
+  --muted:     #7a85a0;
+  --accent:    #5b8dee;
+  --accent2:   #38d9a9;
+  --accent3:   #f0955a;
+  --accent4:   #c084fc;
+  --danger:    #f06a6a;
+  --code-bg:   #111420;
+  --tag-blue:  rgba(91,141,238,0.15);
+  --tag-teal:  rgba(56,217,169,0.12);
+  --tag-amber: rgba(240,149,90,0.13);
+  --tag-purple:rgba(192,132,252,0.13);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Layout ── */
+.page { max-width: 960px; margin: 0 auto; padding: 48px 32px 96px; }
+
+/* ── Header ── */
+.header {
+  padding: 56px 0 48px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+.header-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.header h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.header h1 span { color: var(--accent); }
+.header-meta {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  margin-top: 24px;
+}
+.meta-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+}
+
+/* ── TOC ── */
+.toc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin-bottom: 56px;
+}
+.toc-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 14px;
+}
+.toc ol { padding-left: 20px; }
+.toc li { margin: 5px 0; }
+.toc a { color: var(--muted); text-decoration: none; font-size: 14px; }
+.toc a:hover { color: var(--accent); }
+
+/* ── Section ── */
+.section { margin-bottom: 64px; }
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--accent); background: var(--tag-blue);
+  border: 1px solid rgba(91,141,238,0.3);
+  padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap;
+}
+.section h2 {
+  font-size: 22px; font-weight: 700;
+  color: var(--text);
+}
+
+h3 {
+  font-size: 15px; font-weight: 700;
+  color: var(--accent2);
+  margin: 28px 0 12px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .04em;
+}
+h4 {
+  font-size: 13px; font-weight: 700;
+  color: var(--accent3);
+  margin: 20px 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+
+p { color: var(--muted); margin-bottom: 14px; font-size: 14px; line-height: 1.75; }
+p strong { color: var(--text); font-weight: 600; }
+
+/* ── Code blocks ── */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0 24px;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 8px 8px 0 0;
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--accent2);
+  font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.dot-r { background: #f06a6a; }
+.dot-y { background: var(--accent3); }
+.dot-g { background: var(--accent2); }
+pre code {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; line-height: 1.7;
+  color: var(--text);
+  padding: 20px 20px;
+  white-space: pre;
+}
+
+/* keyword coloring — simple approach */
+.kw  { color: #c084fc; }
+.str { color: var(--accent2); }
+.cm  { color: #4a5270; font-style: italic; }
+.cls { color: var(--accent3); }
+.dec { color: var(--accent); }
+.num { color: #f9c86b; }
+
+/* ── Callout boxes ── */
+.callout {
+  border-radius: 8px; padding: 16px 20px;
+  margin: 20px 0; border: 1px solid;
+  font-size: 13.5px; line-height: 1.65;
+}
+.callout-blue  { background: rgba(91,141,238,.08); border-color: rgba(91,141,238,.3); color: #a0b8f0; }
+.callout-teal  { background: rgba(56,217,169,.07); border-color: rgba(56,217,169,.3); color: #7de8cc; }
+.callout-amber { background: rgba(240,149,90,.08); border-color: rgba(240,149,90,.3); color: #f0b880; }
+.callout-red   { background: rgba(240,106,106,.08); border-color: rgba(240,106,106,.3); color: #f09090; }
+.callout-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .15em; text-transform: uppercase;
+  display: block; margin-bottom: 6px; opacity: .8;
+}
+
+/* ── Data tables ── */
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 16px 0 24px; font-size: 13px;
+}
+th {
+  background: var(--surface2); color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; text-align: left;
+  padding: 10px 14px; border-bottom: 1px solid var(--border2);
+}
+td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted); vertical-align: top;
+}
+td:first-child { color: var(--text); font-weight: 500; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface); }
+
+/* ── Component cards ── */
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px; margin: 20px 0;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--border2); }
+.card-title {
+  font-size: 14px; font-weight: 700;
+  color: var(--text); margin-bottom: 6px;
+}
+.card-sub { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+.card-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 7px; border-radius: 3px;
+  margin-bottom: 10px;
+}
+.badge-blue   { background: var(--tag-blue);   color: var(--accent);  border: 1px solid rgba(91,141,238,.25); }
+.badge-teal   { background: var(--tag-teal);   color: var(--accent2); border: 1px solid rgba(56,217,169,.25); }
+.badge-amber  { background: var(--tag-amber);  color: var(--accent3); border: 1px solid rgba(240,149,90,.25); }
+.badge-purple { background: var(--tag-purple); color: var(--accent4); border: 1px solid rgba(192,132,252,.25); }
+
+/* ── DB schema blocks ── */
+.schema-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+  margin: 12px 0;
+}
+.schema-header {
+  background: var(--surface2);
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  color: var(--accent3);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.schema-header::before {
+  content: '⬡';
+  color: var(--accent3); font-size: 14px;
+}
+.schema-fields { padding: 8px 0; }
+.field-row {
+  display: flex; align-items: center;
+  padding: 6px 16px; gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.field-row:hover { background: var(--surface2); }
+.field-name { color: var(--text); min-width: 180px; }
+.field-type { color: var(--accent2); min-width: 110px; font-size: 11px; }
+.field-flag {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  font-weight: 600;
+}
+.pk  { background: rgba(240,149,90,.15); color: var(--accent3); border: 1px solid rgba(240,149,90,.3); }
+.fk  { background: rgba(91,141,238,.12); color: var(--accent);  border: 1px solid rgba(91,141,238,.25); }
+.idx { background: rgba(56,217,169,.10); color: var(--accent2); border: 1px solid rgba(56,217,169,.25); }
+.schema-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin: 20px 0; }
+
+/* ── Sequence diagram ── */
+.seq { overflow-x: auto; margin: 20px 0; }
+
+/* ── Flow diagram ascii-art style ── */
+.flow-box {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  color: var(--accent2);
+  margin: 16px 0;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+/* ── State machine ── */
+.state-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px; margin: 16px 0;
+}
+.state-node {
+  border-radius: 8px; padding: 14px 12px;
+  text-align: center; border: 1px solid;
+}
+.state-node .sn { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.state-node .sd { font-size: 11px; margin-top: 4px; opacity: .75; }
+.s-pending  { background: rgba(122,133,160,.08); border-color: rgba(122,133,160,.3); color: var(--muted); }
+.s-running  { background: rgba(91,141,238,.10); border-color: rgba(91,141,238,.3);  color: var(--accent); }
+.s-waiting  { background: rgba(192,132,252,.10); border-color: rgba(192,132,252,.3); color: var(--accent4); }
+.s-retrying { background: rgba(240,149,90,.10); border-color: rgba(240,149,90,.3);  color: var(--accent3); }
+.s-completed{ background: rgba(56,217,169,.10); border-color: rgba(56,217,169,.3);  color: var(--accent2); }
+.s-failed   { background: rgba(240,106,106,.10);border-color: rgba(240,106,106,.3); color: var(--danger); }
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-top: 32px; margin-top: 80px;
+  text-align: center; color: var(--muted);
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-label">Low Level Design Document</div>
+  <h1>AI Agent <span>Orchestration</span><br>Framework</h1>
+  <p style="max-width:600px; color:var(--muted); font-size:15px; margin-top:12px;">
+    A production-grade, multi-tenant agentic AI platform with dynamic tool registration,
+    externalized memory, DAG-based workflow execution, retry/fallback chains, and full observability.
+  </p>
+  <div class="header-meta">
+    <span class="meta-tag">Principal AI Engineer · Interview Level</span>
+    <span class="meta-tag">Python 3.11+</span>
+    <span class="meta-tag">Async / Event-Driven</span>
+    <span class="meta-tag">Multi-Tenant</span>
+    <span class="meta-tag">Production-Grade</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <ol>
+    <li><a href="#s1">Requirements</a></li>
+    <li><a href="#s2">High-Level Architecture</a></li>
+    <li><a href="#s3">Core Interfaces &amp; Base Classes</a></li>
+    <li><a href="#s4">Agent Orchestrator Engine</a></li>
+    <li><a href="#s5">Agent Registry &amp; Runtime</a></li>
+    <li><a href="#s6">Tool Execution Layer</a></li>
+    <li><a href="#s7">LLM Router &amp; Prompt Registry</a></li>
+    <li><a href="#s8">Memory Architecture</a></li>
+    <li><a href="#s9">Multi-Tenant Design</a></li>
+    <li><a href="#s10">Retry, Fallback &amp; Checkpointing</a></li>
+    <li><a href="#s11">Event Bus &amp; Async Execution</a></li>
+    <li><a href="#s12">Security Layer</a></li>
+    <li><a href="#s13">Observability</a></li>
+    <li><a href="#s14">Database Schema</a></li>
+    <li><a href="#s15">Sequence Diagram</a></li>
+    <li><a href="#s16">Principal-Level Enhancements</a></li>
+  </ol>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 1 — REQUIREMENTS
+════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Requirements</h2>
+  </div>
+
+  <h3>Functional</h3>
+  <table>
+    <thead><tr><th>Requirement</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Multi-agent collaboration</td><td>Multiple stateless agents execute over a shared workflow DAG with typed message contracts between every node boundary</td></tr>
+      <tr><td>Dynamic tool registration</td><td>Tools plug in at runtime without restarting agents; support REST, gRPC, Lambda, MCP, SQL, search</td></tr>
+      <tr><td>Persistent memory / context</td><td>Short-term (Redis), long-term (Postgres), semantic (Vector DB) — all externalized, none inside agents</td></tr>
+      <tr><td>Workflow orchestration</td><td>YAML-defined DAGs compiled to execution plans; parallel tiers; human-in-the-loop approval nodes</td></tr>
+      <tr><td>Retry &amp; fallback</td><td>Exponential back-off with jitter; per-node retry policy; LLM provider fallback chain; agent version fallback</td></tr>
+      <tr><td>Multi-tenant configuration</td><td>Per-tenant agents, tools, prompts, LLMs, workflows, memory namespaces, and cost budgets</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Non-Functional</h3>
+  <table>
+    <thead><tr><th>Concern</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr><td>Scalability</td><td>Horizontal scale on orchestrator workers; Kafka-backed async tier dispatch</td></tr>
+      <tr><td>Fault tolerance</td><td>Checkpoint after every DAG tier; resume from last known-good state</td></tr>
+      <tr><td>Latency</td><td>Parallel tier execution; async I/O throughout; result caching on tool calls</td></tr>
+      <tr><td>Security</td><td>Tenant isolation at every layer; tool RBAC; prompt injection guards; secrets in Vault</td></tr>
+      <tr><td>Observability</td><td>Distributed traces, token cost metrics, eval scores (hallucination, groundedness) per execution</td></tr>
+      <tr><td>Extensibility</td><td>Plugin architecture for tools, agents, LLM providers, and memory backends</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 2 — HIGH-LEVEL ARCHITECTURE
+════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>High-Level Architecture</h2>
+  </div>
+
+  <div class="flow-box">┌─────────────────────────────────────────────────────────────────┐
+│               API Gateway / Tenant Portal                       │
+│   auth · rate-limiting · tenant routing · input validation      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│            Workflow Configuration Service                        │
+│   YAML → DAG compilation · tenant workflow store · versioning   │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│              Agent Orchestrator Engine                           │
+│  DAG execution · state machine · retry · checkpoint · event bus │
+└──────┬──────────────┬───────────────┬────────────────┬──────────┘
+       │              │               │                │
+  ┌────▼────┐   ┌─────▼────┐   ┌─────▼────┐   ┌──────▼────┐
+  │ Planner │   │ Retrieval│   │Analytics │   │Summarizer │
+  │  Agent  │   │  Agent   │   │  Agent   │   │  Agent    │
+  └────┬────┘   └─────┬────┘   └─────┬────┘   └──────┬────┘
+       └──────────────┴───────────────┴────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│                  Tool Execution Layer                            │
+│   ToolRegistry · sandbox · timeout · rate-limit · result cache  │
+└──────┬──────────────┬───────────────┬────────────────┬──────────┘
+       │              │               │                │
+  SQL/DB         Search API     Slack/Jira         REST/gRPC
+
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│                    Memory Service                                │
+│  Short-term (Redis) · Long-term (Postgres) · Semantic (VectorDB)│
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│        Observability · Event Store (Kafka)                       │
+│   traces · token cost · latency · eval scores · audit log       │
+└─────────────────────────────────────────────────────────────────┘
+
+         ↕ cross-cutting ↕
+┌─────────────────────────────────────────────────────────────────┐
+│       LLM Router · Prompt Registry · Security Layer             │
+│  primary/fallback chains · prompt versioning · RBAC · Vault     │
+└─────────────────────────────────────────────────────────────────┘</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 3 — CORE INTERFACES
+════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Core Interfaces &amp; Base Classes</h2>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-label">Design principle</span>
+    All agents are <strong>stateless</strong>. All state lives in <code>ExecutionContext</code>. Agents never communicate directly — the orchestrator owns the message bus.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="cm"># ── Execution status state machine ──────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">ExecutionStatus</span>(Enum):
+    PENDING   = <span class="str">"pending"</span>
+    RUNNING   = <span class="str">"running"</span>
+    WAITING   = <span class="str">"waiting"</span>    <span class="cm"># awaiting human approval or dependency</span>
+    RETRYING  = <span class="str">"retrying"</span>
+    COMPLETED = <span class="str">"completed"</span>
+    FAILED    = <span class="str">"failed"</span>
+    SKIPPED   = <span class="str">"skipped"</span>
+
+
+<span class="cm"># ── Typed message contract between agents ───────────────────────</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">AgentMessage</span>:
+    <span class="str">"""
+    Validated at every DAG node boundary by the orchestrator.
+    Unknown payload keys are rejected — prevents schema drift.
+    """</span>
+    message_id:     str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    source_agent:   str = <span class="str">""</span>
+    target_agent:   str = <span class="str">""</span>
+    execution_id:   str = <span class="str">""</span>
+    tenant_id:      str = <span class="str">""</span>
+    payload:        Dict[str, Any] = field(default_factory=dict)
+    schema_version: str = <span class="str">"1.0"</span>
+    created_at:     datetime = field(default_factory=datetime.utcnow)
+
+
+<span class="cm"># ── Shared context — READ by agents, WRITTEN by orchestrator ─────</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">ExecutionContext</span>:
+    execution_id:  str
+    workflow_id:   str
+    tenant_id:     str
+    user_id:       str
+    input_data:    Dict[str, Any]
+
+    outputs:       Dict[str, Any]    = field(default_factory=dict)
+    metadata:      Dict[str, Any]    = field(default_factory=dict)
+    memory:        Optional[Any]     = <span class="kw">None</span>
+    status:        ExecutionStatus   = ExecutionStatus.PENDING
+    checkpoint_id: Optional[str]     = <span class="kw">None</span>
+    span_id:       Optional[str]     = <span class="kw">None</span>   <span class="cm"># for distributed tracing</span>
+
+
+<span class="cm"># ── Agent base interface ─────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">Agent</span>(ABC):
+    name:    str
+    version: str
+    <span class="cm"># JSON Schema — used by LLM for structured tool calling</span>
+    input_schema:  Dict
+    output_schema: Dict
+
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="dec">execute</span>(
+        self,
+        context: ExecutionContext,
+        tools:   <span class="str">"ToolRegistry"</span>,
+        llm:     <span class="str">"LLMRouter"</span>,
+    ) -> AgentMessage: ...
+
+    <span class="kw">def</span> <span class="dec">validate_input</span>(self, payload: Dict) -> bool:
+        <span class="cm"># Override: validate against self.input_schema via jsonschema</span>
+        <span class="kw">return True</span>
+
+
+<span class="cm"># ── Tool base interface ──────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">Tool</span>(ABC):
+    name:         str
+    description:  str
+    input_schema: Dict   <span class="cm"># exposed to LLM for function-calling</span>
+
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="dec">execute</span>(self, params: Dict[str, Any]) -> Dict[str, Any]: ...
+
+    <span class="kw">def</span> <span class="dec">validate</span>(self, params: Dict) -> bool: <span class="kw">return True</span>
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 4 — ORCHESTRATOR ENGINE
+════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Agent Orchestrator Engine</h2>
+  </div>
+
+  <div class="callout callout-teal">
+    <span class="callout-label">Key design decisions</span>
+    <strong>Tier-based parallel execution</strong> — nodes in the same DAG tier run concurrently via asyncio + ThreadPoolExecutor.
+    <strong>Per-tenant semaphores</strong> prevent noisy-neighbour issues.
+    <strong>Checkpointing</strong> after every tier enables crash recovery.
+  </div>
+
+  <h3>Workflow DAG model</h3>
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">AgentNode</span>:
+    node_id:           str
+    agent_name:        str
+    depends_on:        List[str]       <span class="cm"># node_ids that must complete first</span>
+    retry_policy:      RetryPolicy
+    timeout_sec:       int  = <span class="num">120</span>
+    is_human_approval: bool = <span class="kw">False</span>
+    fallback_agent:    Optional[str] = <span class="kw">None</span>   <span class="cm"># AgentV1 if AgentV2 fails</span>
+
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Workflow</span>:
+    workflow_id: str
+    tenant_id:   str
+    name:        str
+    version:     str
+    nodes:       List[AgentNode]
+
+    <span class="kw">def</span> <span class="dec">topological_order</span>(self) -> List[List[AgentNode]]:
+        <span class="str">"""Returns execution tiers — each tier runs fully in parallel."""</span>
+        done, tiers = set(), []
+        <span class="kw">while</span> len(done) &lt; len(self.nodes):
+            tier = [
+                n <span class="kw">for</span> n <span class="kw">in</span> self.nodes
+                <span class="kw">if</span> n.node_id <span class="kw">not in</span> done
+                <span class="kw">and</span> all(d <span class="kw">in</span> done <span class="kw">for</span> d <span class="kw">in</span> n.depends_on)
+            ]
+            <span class="kw">if not</span> tier:
+                <span class="kw">raise</span> ValueError(<span class="str">"Cycle detected in workflow DAG"</span>)
+            tiers.append(tier)
+            done.update(n.node_id <span class="kw">for</span> n <span class="kw">in</span> tier)
+        <span class="kw">return</span> tiers
+</code></pre>
+
+  <h3>Orchestrator — execute loop</h3>
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">class</span> <span class="cls">AgentOrchestrator</span>:
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, agent_registry, tool_registry, memory_service,
+                 llm_router, event_bus, checkpoint_store,
+                 max_workers: int = <span class="num">10</span>):
+        self._agents      = agent_registry
+        self._tools       = tool_registry
+        self._memory      = memory_service
+        self._llm         = llm_router
+        self._bus         = event_bus
+        self._checkpoints = checkpoint_store
+        self._executor    = ThreadPoolExecutor(max_workers=max_workers)
+        <span class="cm"># max 5 concurrent workflow executions per tenant (noisy-neighbour guard)</span>
+        self._tenant_sems: Dict[str, asyncio.Semaphore] = {}
+
+    <span class="kw">async def</span> <span class="dec">execute</span>(
+        self,
+        workflow:    Workflow,
+        tenant_id:   str,
+        input_data:  Dict,
+        resume_from: Optional[str] = <span class="kw">None</span>,
+    ) -> ExecutionContext:
+
+        sem = self._tenant_sems.setdefault(tenant_id, asyncio.Semaphore(<span class="num">5</span>))
+        <span class="kw">async with</span> sem:
+            ctx = <span class="kw">await</span> self._build_context(workflow, tenant_id, input_data)
+            <span class="kw">if</span> resume_from:
+                ctx = <span class="kw">await</span> self._checkpoints.load(resume_from)
+
+            <span class="kw">for</span> tier <span class="kw">in</span> workflow.topological_order():
+                <span class="kw">await</span> self._execute_tier(ctx, tier)
+                <span class="kw">await</span> self._checkpoints.save(ctx)     <span class="cm"># checkpoint after every tier</span>
+
+            ctx.status = ExecutionStatus.COMPLETED
+            <span class="kw">await</span> self._bus.publish(<span class="str">"workflow.completed"</span>, ctx)
+            <span class="kw">return</span> ctx
+
+    <span class="kw">async def</span> <span class="dec">_execute_tier</span>(self, ctx, nodes):
+        <span class="str">"""All nodes in a tier run concurrently."""</span>
+        tasks = [
+            asyncio.get_event_loop().run_in_executor(
+                self._executor, self._execute_node, ctx, node
+            )
+            <span class="kw">for</span> node <span class="kw">in</span> nodes
+        ]
+        results = <span class="kw">await</span> asyncio.gather(*tasks, return_exceptions=<span class="kw">True</span>)
+        <span class="kw">for</span> node, result <span class="kw">in</span> zip(nodes, results):
+            <span class="kw">if</span> isinstance(result, Exception): <span class="kw">raise</span> result
+            ctx.outputs[node.agent_name] = result.payload   <span class="cm"># immutable write</span>
+
+    <span class="kw">def</span> <span class="dec">_execute_node</span>(self, ctx, node):
+        <span class="kw">if</span> node.is_human_approval:
+            <span class="kw">return</span> self._await_human_approval(ctx, node)
+
+        agent  = self._agents.get(node.agent_name)
+        policy = node.retry_policy
+
+        <span class="kw">for</span> attempt <span class="kw">in</span> range(policy.max_retries + <span class="num">1</span>):
+            <span class="kw">try</span>:
+                result = agent.execute(ctx, self._tools, self._llm)
+                self._bus.publish_sync(<span class="str">"agent.completed"</span>, {
+                    <span class="str">"node_id"</span>: node.node_id, <span class="str">"attempt"</span>: attempt
+                })
+                <span class="kw">return</span> result
+            <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+                <span class="kw">if</span> attempt == policy.max_retries:
+                    <span class="cm"># try fallback agent version before giving up</span>
+                    <span class="kw">if</span> node.fallback_agent:
+                        fallback = self._agents.get(node.fallback_agent)
+                        <span class="kw">return</span> fallback.execute(ctx, self._tools, self._llm)
+                    ctx.status = ExecutionStatus.FAILED
+                    <span class="kw">raise</span>
+                time.sleep(policy.backoff_seconds(attempt))
+                ctx.status = ExecutionStatus.RETRYING
+</code></pre>
+
+  <h3>State machine transitions</h3>
+  <div class="state-grid">
+    <div class="state-node s-pending"><div class="sn">PENDING</div><div class="sd">Queued, not started</div></div>
+    <div class="state-node s-running"><div class="sn">RUNNING</div><div class="sd">Agent executing</div></div>
+    <div class="state-node s-waiting"><div class="sn">WAITING</div><div class="sd">Human approval gate</div></div>
+    <div class="state-node s-retrying"><div class="sn">RETRYING</div><div class="sd">Backoff in progress</div></div>
+    <div class="state-node s-completed"><div class="sn">COMPLETED</div><div class="sd">Output written</div></div>
+    <div class="state-node s-failed"><div class="sn">FAILED</div><div class="sd">All retries exhausted</div></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 5 — AGENT REGISTRY
+════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Agent Registry &amp; Runtime</h2>
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">class</span> <span class="cls">AgentRegistry</span>:
+    <span class="str">"""
+    Central store for all registered agent implementations.
+    Supports versioning — orchestrator can request specific versions.
+    """</span>
+    <span class="kw">def</span> <span class="dec">__init__</span>(self):
+        <span class="cm"># { agent_name: { version: Agent } }</span>
+        self._store: Dict[str, Dict[str, Agent]] = {}
+
+    <span class="kw">def</span> <span class="dec">register</span>(self, agent: Agent, version: str = <span class="str">"latest"</span>) -> <span class="kw">None</span>:
+        self._store.setdefault(agent.name, {})[version] = agent
+
+    <span class="kw">def</span> <span class="dec">get</span>(self, name: str, version: str = <span class="str">"latest"</span>) -> Agent:
+        <span class="kw">try</span>:
+            <span class="kw">return</span> self._store[name][version]
+        <span class="kw">except</span> KeyError:
+            <span class="kw">raise</span> AgentNotFoundError(f<span class="str">"Agent '{name}' v{version} not registered"</span>)
+
+    <span class="kw">def</span> <span class="dec">find_by_capability</span>(self, capability: str) -> List[Agent]:
+        <span class="str">"""Dynamic agent discovery — 'give me any agent that can do RAG'."""</span>
+        <span class="kw">return</span> [
+            a <span class="kw">for</span> versions <span class="kw">in</span> self._store.values()
+            <span class="kw">for</span> a <span class="kw">in</span> versions.values()
+            <span class="kw">if</span> capability <span class="kw">in</span> getattr(a, <span class="str">"capabilities"</span>, [])
+        ]
+
+    <span class="kw">def</span> <span class="dec">list_all</span>(self) -> List[Dict]:
+        <span class="kw">return</span> [
+            {<span class="str">"name"</span>: name, <span class="str">"versions"</span>: list(versions.keys()),
+             <span class="str">"capabilities"</span>: getattr(list(versions.values())[-<span class="num">1</span>], <span class="str">"capabilities"</span>, [])}
+            <span class="kw">for</span> name, versions <span class="kw">in</span> self._store.items()
+        ]
+
+
+<span class="cm"># ── Concrete agent example ───────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">PlannerAgent</span>(Agent):
+    name         = <span class="str">"planner"</span>
+    version      = <span class="str">"v2"</span>
+    capabilities = [<span class="str">"planning"</span>, <span class="str">"decomposition"</span>]
+
+    <span class="kw">def</span> <span class="dec">execute</span>(self, context, tools, llm) -> AgentMessage:
+        prompt = llm.get_prompt(<span class="str">"planner"</span>, context.tenant_id)
+        plan   = llm.complete(
+            agent_name = self.name,
+            tenant_id  = context.tenant_id,
+            messages   = [
+                {<span class="str">"role"</span>: <span class="str">"system"</span>, <span class="str">"content"</span>: prompt},
+                {<span class="str">"role"</span>: <span class="str">"user"</span>,   <span class="str">"content"</span>: str(context.input_data)},
+            ]
+        )
+        <span class="kw">return</span> AgentMessage(
+            source_agent = self.name,
+            execution_id = context.execution_id,
+            tenant_id    = context.tenant_id,
+            payload      = {<span class="str">"plan"</span>: plan},
+        )
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 6 — TOOL EXECUTION LAYER
+════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Tool Execution Layer</h2>
+  </div>
+
+  <div class="callout callout-amber">
+    <span class="callout-label">Interview gap most candidates miss</span>
+    Tools need a <strong>sandbox</strong> (tenant isolation), <strong>timeout</strong> enforcement, <strong>rate limiting</strong>, and a <strong>result cache</strong> to avoid redundant API calls within one execution.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">class</span> <span class="cls">ToolRegistry</span>:
+    <span class="kw">def</span> <span class="dec">__init__</span>(self):
+        self._tools: Dict[str, Tool] = {}
+
+    <span class="kw">def</span> <span class="dec">register</span>(self, tool: Tool)   -> <span class="kw">None</span>: self._tools[tool.name] = tool
+    <span class="kw">def</span> <span class="dec">unregister</span>(self, name: str) -> <span class="kw">None</span>: self._tools.pop(name, <span class="kw">None</span>)
+    <span class="kw">def</span> <span class="dec">get</span>(self, name: str)         -> Tool: <span class="kw">return</span> self._tools[name]
+    <span class="kw">def</span> <span class="dec">list_schemas</span>(self)           -> List[Dict]:
+        <span class="kw">return</span> [{<span class="str">"name"</span>: t.name, <span class="str">"description"</span>: t.description,
+                  <span class="str">"schema"</span>: t.input_schema} <span class="kw">for</span> t <span class="kw">in</span> self._tools.values()]
+
+
+<span class="kw">class</span> <span class="cls">ToolExecutor</span>:
+    <span class="str">"""
+    Wraps raw tool.execute() with:
+      - Tenant RBAC check (is this tool allowed for this tenant?)
+      - Timeout via concurrent.futures
+      - Rate limiting per (tenant, tool) pair
+      - Result caching within one execution
+      - Sanitized output (strips dangerous keys before returning to LLM)
+    """</span>
+
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, registry, rbac, rate_limiter, cache):
+        self._registry    = registry
+        self._rbac        = rbac
+        self._rate_limiter = rate_limiter
+        self._cache       = cache
+
+    <span class="kw">def</span> <span class="dec">execute</span>(
+        self,
+        tool_name:    str,
+        params:       Dict,
+        tenant_id:    str,
+        execution_id: str,
+    ) -> Dict:
+
+        <span class="cm"># 1. Authorization</span>
+        <span class="kw">if not</span> self._rbac.is_allowed(tenant_id, tool_name):
+            <span class="kw">raise</span> PermissionError(f<span class="str">"Tenant {tenant_id} cannot use tool {tool_name}"</span>)
+
+        <span class="cm"># 2. Rate limit</span>
+        self._rate_limiter.check(tenant_id, tool_name)
+
+        <span class="cm"># 3. Cache hit</span>
+        cache_key = f<span class="str">"{execution_id}:{tool_name}:{hash(str(params))}"</span>
+        <span class="kw">if</span> cached := self._cache.get(cache_key):
+            <span class="kw">return</span> cached
+
+        <span class="cm"># 4. Execute with timeout</span>
+        tool = self._registry.get(tool_name)
+        <span class="kw">with</span> ThreadPoolExecutor(max_workers=<span class="num">1</span>) <span class="kw">as</span> ex:
+            future = ex.submit(tool.execute, params)
+            <span class="kw">try</span>:
+                result = future.result(timeout=<span class="num">30</span>)
+            <span class="kw">except</span> TimeoutError:
+                <span class="kw">raise</span> ToolTimeoutError(f<span class="str">"{tool_name} timed out after 30s"</span>)
+
+        <span class="cm"># 5. Cache and return</span>
+        self._cache.set(cache_key, result, ttl=<span class="num">300</span>)
+        <span class="kw">return</span> self._sanitize(result)
+
+    <span class="kw">def</span> <span class="dec">_sanitize</span>(self, result: Dict) -> Dict:
+        <span class="cm"># Strip keys that could carry prompt-injection payloads</span>
+        BLOCKED = {<span class="str">"system_prompt"</span>, <span class="str">"__inject__"</span>, <span class="str">"override_instructions"</span>}
+        <span class="kw">return</span> {k: v <span class="kw">for</span> k, v <span class="kw">in</span> result.items() <span class="kw">if</span> k <span class="kw">not in</span> BLOCKED}
+</code></pre>
+
+  <h3>Supported tool types</h3>
+  <div class="card-grid">
+    <div class="card"><span class="card-badge badge-blue">REST</span><div class="card-title">RestTool</div><div class="card-sub">Any HTTP endpoint. Config: url, method, headers, auth. Secrets resolved from Vault.</div></div>
+    <div class="card"><span class="card-badge badge-teal">DATA</span><div class="card-title">SQLTool</div><div class="card-sub">Parameterized SQL over tenant-scoped connections. Read-only by default.</div></div>
+    <div class="card"><span class="card-badge badge-amber">SEARCH</span><div class="card-title">SearchTool</div><div class="card-sub">Wraps Elastic, Algolia, or internal search. Returns ranked results with scores.</div></div>
+    <div class="card"><span class="card-badge badge-purple">COLLAB</span><div class="card-title">SlackTool / JiraTool</div><div class="card-sub">SaaS integrations. OAuth tokens stored in Vault, refreshed automatically.</div></div>
+    <div class="card"><span class="card-badge badge-blue">SERVERLESS</span><div class="card-title">LambdaTool</div><div class="card-sub">Invokes AWS Lambda or Cloud Function. Async invocation with result polling.</div></div>
+    <div class="card"><span class="card-badge badge-teal">PROTOCOL</span><div class="card-title">MCPTool</div><div class="card-sub">Model Context Protocol — plug any MCP-compatible server without code changes.</div></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 7 — LLM ROUTER & PROMPT REGISTRY
+════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2>LLM Router &amp; Prompt Registry</h2>
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">LLMConfig</span>:
+    provider:    str         <span class="cm"># "openai" | "anthropic" | "google"</span>
+    model:       str
+    api_key_ref: str         <span class="cm"># Vault secret path — NEVER store plaintext keys</span>
+    max_tokens:  int   = <span class="num">4096</span>
+    temperature: float = <span class="num">0.0</span>
+    complexity:  str   = <span class="str">"any"</span>  <span class="cm"># "simple" | "complex" | "any"</span>
+
+
+<span class="kw">class</span> <span class="cls">LLMRouter</span>:
+    <span class="str">"""
+    Primary + fallback chain. Also does cost-based routing:
+      complexity=simple  → smallest model in chain
+      complexity=complex → largest model (primary)
+    """</span>
+
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, primary, fallbacks, prompt_registry, vault):
+        self._chain   = [primary] + fallbacks
+        self._prompts = prompt_registry
+        self._vault   = vault
+
+    <span class="kw">def</span> <span class="dec">complete</span>(self, agent_name, tenant_id, messages, complexity=<span class="str">"auto"</span>) -> str:
+        chain     = self._select_chain(complexity)
+        last_exc  = <span class="kw">None</span>
+        <span class="kw">for</span> config <span class="kw">in</span> chain:
+            <span class="kw">try</span>:
+                api_key = self._vault.get(config.api_key_ref)
+                <span class="kw">return</span> self._call(config, api_key, messages)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                last_exc = e
+        <span class="kw">raise</span> RuntimeError(f<span class="str">"All LLM providers failed. Last: {last_exc}"</span>)
+
+    <span class="kw">def</span> <span class="dec">get_prompt</span>(self, agent_name, tenant_id) -> str:
+        <span class="kw">return</span> self._prompts.resolve(agent_name, tenant_id)
+
+    <span class="kw">def</span> <span class="dec">_select_chain</span>(self, complexity):
+        <span class="kw">if</span> complexity == <span class="str">"simple"</span>:
+            <span class="kw">return</span> [c <span class="kw">for</span> c <span class="kw">in</span> reversed(self._chain)]
+        <span class="kw">return</span> self._chain
+
+
+<span class="kw">class</span> <span class="cls">PromptRegistry</span>:
+    <span class="str">"""
+    Versioned prompt store per (agent_name, tenant_id).
+    Supports A/B testing via traffic_split.
+    Roll back a bad prompt without redeployment.
+    """</span>
+
+    <span class="kw">def</span> <span class="dec">upsert</span>(self, agent_name, tenant_id, template, version, traffic_split=<span class="num">1.0</span>):
+        <span class="cm"># Persist to DB: (agent_name, tenant_id, version, template, traffic_split)</span>
+        ...
+
+    <span class="kw">def</span> <span class="dec">resolve</span>(self, agent_name, tenant_id) -> str:
+        <span class="cm"># Fetch active versions for this (agent, tenant)</span>
+        <span class="cm"># Route by traffic_split weights (weighted random selection)</span>
+        <span class="cm"># Falls back to global default if no tenant-specific prompt found</span>
+        ...
+
+    <span class="kw">def</span> <span class="dec">rollback</span>(self, agent_name, tenant_id, to_version: str):
+        <span class="cm"># Set traffic_split=1.0 on to_version, 0.0 on all others</span>
+        ...
+</code></pre>
+
+  <h3>Fallback chain — YAML config</h3>
+  <pre><div class="code-header"><span class="code-lang">YAML</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">llm_router</span>:
+  <span class="kw">primary</span>:
+    provider: openai
+    model: gpt-4o
+    api_key_ref: vault/secret/openai
+    complexity: complex
+
+  <span class="kw">fallbacks</span>:
+    - provider: anthropic
+      model: claude-3-5-sonnet
+      api_key_ref: vault/secret/anthropic
+      complexity: any
+
+    - provider: google
+      model: gemini-1.5-pro
+      api_key_ref: vault/secret/google
+      complexity: any
+
+    - provider: openai          <span class="cm"># small model for simple tasks / cost routing</span>
+      model: gpt-4o-mini
+      api_key_ref: vault/secret/openai
+      complexity: simple
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 8 — MEMORY ARCHITECTURE
+════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2>Memory Architecture</h2>
+  </div>
+
+  <div class="callout callout-red">
+    <span class="callout-label">Common interview mistake</span>
+    Storing memory <strong>inside agents</strong>. Agents are stateless workers. Memory is an externalized service injected into ExecutionContext.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">class</span> <span class="cls">MemoryService</span>:
+    <span class="str">"""
+    Facade over three memory backends.
+    All keys are namespaced by tenant_id to ensure isolation.
+    """</span>
+
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, short_term, long_term, semantic):
+        self.st = short_term   <span class="cm"># Redis</span>
+        self.lt = long_term    <span class="cm"># PostgreSQL</span>
+        self.sm = semantic     <span class="cm"># Vector DB (Pinecone / Weaviate / Qdrant)</span>
+
+    <span class="cm"># ── Short-term (execution scope) ────────────────────────────</span>
+    <span class="kw">def</span> <span class="dec">set_short</span>(self, tenant_id, execution_id, key, value, ttl=<span class="num">3600</span>):
+        self.st.set(f<span class="str">"{tenant_id}:{execution_id}:{key}"</span>, value, ex=ttl)
+
+    <span class="kw">def</span> <span class="dec">get_short</span>(self, tenant_id, execution_id, key):
+        <span class="kw">return</span> self.st.get(f<span class="str">"{tenant_id}:{execution_id}:{key}"</span>)
+
+    <span class="cm"># ── Long-term (conversation / user history) ──────────────────</span>
+    <span class="kw">def</span> <span class="dec">append_long</span>(self, tenant_id, user_id, role, content):
+        self.lt.execute(
+            <span class="str">"INSERT INTO memory (tenant_id,user_id,role,content,created_at)"</span>
+            <span class="str">" VALUES (%s,%s,%s,%s,NOW())"</span>,
+            (tenant_id, user_id, role, content)
+        )
+
+    <span class="kw">def</span> <span class="dec">get_history</span>(self, tenant_id, user_id, limit=<span class="num">20</span>) -> List[Dict]:
+        <span class="kw">return</span> self.lt.fetchall(
+            <span class="str">"SELECT role,content,created_at FROM memory"</span>
+            <span class="str">" WHERE tenant_id=%s AND user_id=%s"</span>
+            <span class="str">" ORDER BY created_at DESC LIMIT %s"</span>,
+            (tenant_id, user_id, limit)
+        )
+
+    <span class="cm"># ── Semantic (knowledge retrieval) ───────────────────────────</span>
+    <span class="kw">def</span> <span class="dec">upsert_semantic</span>(self, tenant_id, doc_id, text, embedding):
+        self.sm.upsert(
+            vectors=[{<span class="str">"id"</span>: f<span class="str">"{tenant_id}:{doc_id}"</span>,
+                       <span class="str">"values"</span>: embedding, <span class="str">"metadata"</span>: {<span class="str">"text"</span>: text}}],
+            namespace=tenant_id
+        )
+
+    <span class="kw">def</span> <span class="dec">query_semantic</span>(self, tenant_id, query_embedding, top_k=<span class="num">5</span>) -> List[Dict]:
+        <span class="kw">return</span> self.sm.query(
+            vector=query_embedding, top_k=top_k,
+            namespace=tenant_id,    <span class="cm"># tenant isolation enforced here</span>
+            include_metadata=<span class="kw">True</span>
+        ).matches
+</code></pre>
+
+  <table>
+    <thead><tr><th>Memory Tier</th><th>Backend</th><th>Scope</th><th>TTL / Retention</th></tr></thead>
+    <tbody>
+      <tr><td>Short-term</td><td>Redis</td><td>Single workflow execution</td><td>1 hour (configurable)</td></tr>
+      <tr><td>Long-term</td><td>PostgreSQL</td><td>User conversation history</td><td>90 days (tenant-configurable)</td></tr>
+      <tr><td>Semantic</td><td>Pinecone / Qdrant</td><td>Knowledge / RAG corpus</td><td>Permanent until evicted</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 9 — MULTI-TENANT DESIGN
+════════════════════════════════════════════ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2>Multi-Tenant Design</h2>
+  </div>
+
+  <div class="callout callout-teal">
+    <span class="callout-label">Principal-level concern</span>
+    Tenant isolation must be enforced at <strong>every layer</strong> — config, storage, concurrency, tools, memory, and LLM billing. A single missed layer is a data breach.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">TenantConfig</span>:
+    tenant_id:        str
+    enabled_agents:   List[str]         <span class="cm"># whitelist of agents this tenant may use</span>
+    enabled_tools:    List[str]         <span class="cm"># whitelist of tools</span>
+    llm_overrides:    Dict[str, Any]    <span class="cm"># override primary model, temperature, etc.</span>
+    prompt_overrides: Dict[str, str]    <span class="cm"># agent_name → custom prompt template</span>
+    max_concurrent_workflows: int = <span class="num">5</span>
+    monthly_token_budget:     int = <span class="num">10_000_000</span>
+    memory_retention_days:    int = <span class="num">90</span>
+
+
+<span class="cm"># ── Example tenant config (YAML, stored in DB) ───────────────────</span>
+<span class="cm">#
+# tenant: acme-corp
+# enabled_agents: [planner, retrieval, summarizer]
+# enabled_tools:  [jira, slack, sql-readonly]
+# llm_overrides:
+#   primary_model: gpt-4o-mini   # cost-conscious tenant
+# monthly_token_budget: 5_000_000
+</span>
+
+<span class="kw">class</span> <span class="cls">TenantRegistry</span>:
+    <span class="kw">def</span> <span class="dec">get</span>(self, tenant_id: str) -> TenantConfig: ...
+
+    <span class="kw">def</span> <span class="dec">validate_agent</span>(self, tenant_id, agent_name):
+        config = self.get(tenant_id)
+        <span class="kw">if</span> agent_name <span class="kw">not in</span> config.enabled_agents:
+            <span class="kw">raise</span> PermissionError(f<span class="str">"Agent {agent_name} not enabled for {tenant_id}"</span>)
+
+    <span class="kw">def</span> <span class="dec">validate_tool</span>(self, tenant_id, tool_name):
+        config = self.get(tenant_id)
+        <span class="kw">if</span> tool_name <span class="kw">not in</span> config.enabled_tools:
+            <span class="kw">raise</span> PermissionError(f<span class="str">"Tool {tool_name} not enabled for {tenant_id}"</span>)
+</code></pre>
+
+  <h3>Isolation enforcement points</h3>
+  <table>
+    <thead><tr><th>Layer</th><th>Isolation mechanism</th></tr></thead>
+    <tbody>
+      <tr><td>API Gateway</td><td>JWT contains tenant_id; every request authenticated before routing</td></tr>
+      <tr><td>Orchestrator</td><td>Per-tenant asyncio.Semaphore caps concurrent workflows</td></tr>
+      <tr><td>Agents</td><td>TenantRegistry.validate_agent() called before every node execution</td></tr>
+      <tr><td>Tools</td><td>RBAC check in ToolExecutor; secrets are per-tenant in Vault</td></tr>
+      <tr><td>Memory (Redis)</td><td>All keys prefixed with tenant_id; no cross-tenant key access possible</td></tr>
+      <tr><td>Memory (Postgres)</td><td>tenant_id column on every table; all queries include WHERE tenant_id=?</td></tr>
+      <tr><td>Memory (Vector DB)</td><td>Namespace = tenant_id; queries scoped to namespace</td></tr>
+      <tr><td>LLM billing</td><td>Token usage logged per tenant; enforced against monthly_token_budget</td></tr>
+      <tr><td>Observability</td><td>All spans tagged with tenant_id; dashboards filtered by tenant</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 10 — RETRY, FALLBACK & CHECKPOINT
+════════════════════════════════════════════ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2>Retry, Fallback &amp; Checkpointing</h2>
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">RetryPolicy</span>:
+    max_retries:    int   = <span class="num">3</span>
+    base_delay_sec: float = <span class="num">1.0</span>
+    max_delay_sec:  float = <span class="num">30.0</span>
+    jitter:         bool  = <span class="kw">True</span>   <span class="cm"># prevents thundering herd</span>
+
+    <span class="kw">def</span> <span class="dec">backoff_seconds</span>(self, attempt: int) -> float:
+        delay = min(self.base_delay_sec * (<span class="num">2</span> ** attempt), self.max_delay_sec)
+        <span class="kw">if</span> self.jitter:
+            delay *= (<span class="num">0.5</span> + random.random() * <span class="num">0.5</span>)
+        <span class="kw">return</span> delay
+    <span class="cm">
+# Retry schedule (base=1.0, no jitter):
+#   Attempt 0 → fail → wait 1s
+#   Attempt 1 → fail → wait 2s
+#   Attempt 2 → fail → wait 4s   (capped at max_delay)
+#   Attempt 3 → fail → raise / try fallback agent
+</span>
+
+<span class="kw">class</span> <span class="cls">CheckpointStore</span>:
+    <span class="str">"""
+    Persists ExecutionContext after every DAG tier.
+    On orchestrator crash: reload from last checkpoint and resume
+    from the next tier — no work is lost or duplicated.
+    """</span>
+
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, storage):   <span class="cm"># storage = Redis or S3</span>
+        self._storage = storage
+
+    <span class="kw">async def</span> <span class="dec">save</span>(self, ctx: ExecutionContext) -> str:
+        checkpoint_id = f<span class="str">"ckpt:{ctx.execution_id}:{ctx.status.value}"</span>
+        await self._storage.set(
+            checkpoint_id,
+            json.dumps(dataclasses.asdict(ctx)),
+            ex=<span class="num">86400</span>  <span class="cm"># 24-hour TTL</span>
+        )
+        ctx.checkpoint_id = checkpoint_id
+        <span class="kw">return</span> checkpoint_id
+
+    <span class="kw">async def</span> <span class="dec">load</span>(self, checkpoint_id: str) -> ExecutionContext:
+        raw = await self._storage.get(checkpoint_id)
+        <span class="kw">if not</span> raw:
+            <span class="kw">raise</span> CheckpointNotFoundError(checkpoint_id)
+        <span class="kw">return</span> ExecutionContext(**json.loads(raw))
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 11 — EVENT BUS
+════════════════════════════════════════════ -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2>Event Bus &amp; Async Execution</h2>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-label">Why event-driven</span>
+    Synchronous agent chaining couples producers to consumers and blocks threads. An event bus decouples tiers, enables fan-out, and provides a durable audit log.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="cm"># Events published on Kafka topics (one topic per event type)</span>
+
+TOPICS = {
+    <span class="str">"workflow.started"</span>:       <span class="str">"orchestrator.workflow.started"</span>,
+    <span class="str">"agent.completed"</span>:        <span class="str">"orchestrator.agent.completed"</span>,
+    <span class="str">"agent.retrying"</span>:         <span class="str">"orchestrator.agent.retrying"</span>,
+    <span class="str">"tool.executed"</span>:          <span class="str">"orchestrator.tool.executed"</span>,
+    <span class="str">"human.approval.required"</span>:<span class="str">"orchestrator.human.approval"</span>,
+    <span class="str">"workflow.completed"</span>:     <span class="str">"orchestrator.workflow.completed"</span>,
+    <span class="str">"workflow.failed"</span>:        <span class="str">"orchestrator.workflow.failed"</span>,
+}
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">WorkflowEvent</span>:
+    event_id:     str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    event_type:   str = <span class="str">""</span>
+    tenant_id:    str = <span class="str">""</span>
+    execution_id: str = <span class="str">""</span>
+    agent_name:   str = <span class="str">""</span>
+    payload:      Dict = field(default_factory=dict)
+    timestamp:    str  = field(
+        default_factory=<span class="kw">lambda</span>: datetime.utcnow().isoformat()
+    )
+
+<span class="kw">class</span> <span class="cls">EventBus</span>:
+    <span class="kw">def</span> <span class="dec">__init__</span>(self, kafka_producer):
+        self._producer = kafka_producer
+
+    <span class="kw">async def</span> <span class="dec">publish</span>(self, event_type: str, data: Any):
+        event = WorkflowEvent(
+            event_type   = event_type,
+            tenant_id    = getattr(data, <span class="str">"tenant_id"</span>, <span class="str">""</span>),
+            execution_id = getattr(data, <span class="str">"execution_id"</span>, <span class="str">""</span>),
+            payload      = dataclasses.asdict(data) <span class="kw">if</span> dataclasses.is_dataclass(data) <span class="kw">else</span> data,
+        )
+        await self._producer.send(TOPICS[event_type], json.dumps(dataclasses.asdict(event)))
+
+    <span class="kw">def</span> <span class="dec">publish_sync</span>(self, event_type: str, data: Any):
+        <span class="cm"># Used inside sync thread-pool workers</span>
+        asyncio.run_coroutine_threadsafe(self.publish(event_type, data), self._loop)
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 12 — SECURITY LAYER
+════════════════════════════════════════════ -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2>Security Layer</h2>
+  </div>
+
+  <div class="callout callout-red">
+    <span class="callout-label">Missing from most LLD answers</span>
+    Security is not just auth at the API gateway. It must cover <strong>tool RBAC</strong>, <strong>prompt injection defense</strong>, <strong>secret management</strong>, and <strong>tenant data leakage prevention</strong> at every layer.
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="kw">class</span> <span class="cls">SecurityLayer</span>:
+    <span class="str">"""
+    Four security concerns addressed:
+
+    1. Tool RBAC         — ToolExecutor calls rbac.is_allowed() before every execution
+    2. Prompt injection  — ToolExecutor._sanitize() strips dangerous keys from tool results
+    3. Secret management — LLMRouter fetches API keys from Vault at call time, never
+                           stores them in config files, env vars, or DB plaintext
+    4. Input validation  — Agent.validate_input() enforces JSON Schema on every message;
+                           rejects oversized or malformed payloads before LLM sees them
+    """</span>
+
+    <span class="cm"># ── 1. Tool RBAC ─────────────────────────────────────────────────</span>
+    <span class="kw">class</span> <span class="cls">ToolRBAC</span>:
+        <span class="kw">def</span> <span class="dec">is_allowed</span>(self, tenant_id: str, tool_name: str) -> bool:
+            config = TenantRegistry().get(tenant_id)
+            <span class="kw">return</span> tool_name <span class="kw">in</span> config.enabled_tools
+
+    <span class="cm"># ── 2. Prompt injection guard ─────────────────────────────────────</span>
+    <span class="cm"># Tool results pass through _sanitize() in ToolExecutor (Section 6)
+    # before being injected into LLM context.
+    # Additionally, all user inputs are wrapped in a structured template
+    # that separates system instructions from user content:
+    #
+    #   SYSTEM: {system_prompt}
+    #   USER_INPUT: ###BEGIN_USER_INPUT###
+    #   {user_content}
+    #   ###END_USER_INPUT###
+    #
+    # The LLM is instructed to treat content between delimiters as data,
+    # not as instructions. Injected "ignore previous instructions" payloads
+    # are contained within the data section.
+    </span>
+
+    <span class="cm"># ── 3. Secret management ─────────────────────────────────────────</span>
+    <span class="kw">class</span> <span class="cls">VaultClient</span>:
+        <span class="kw">def</span> <span class="dec">get</span>(self, path: str) -> str:
+            <span class="cm"># HashiCorp Vault or AWS Secrets Manager call</span>
+            <span class="cm"># Secrets are fetched at call time and cached in memory ≤5 min</span>
+            <span class="cm"># Never written to disk, logs, or error messages</span>
+            ...
+
+    <span class="cm"># ── 4. Input payload validation ───────────────────────────────────</span>
+    <span class="kw">class</span> <span class="cls">InputGuard</span>:
+        MAX_INPUT_BYTES = <span class="num">65_536</span>   <span class="cm"># 64 KB hard cap</span>
+
+        <span class="kw">def</span> <span class="dec">validate</span>(self, payload: Dict, schema: Dict) -> <span class="kw">None</span>:
+            raw = json.dumps(payload)
+            <span class="kw">if</span> len(raw.encode()) > self.MAX_INPUT_BYTES:
+                <span class="kw">raise</span> ValueError(<span class="str">"Input payload exceeds size limit"</span>)
+            jsonschema.validate(payload, schema)   <span class="cm"># raises on schema mismatch</span>
+</code></pre>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 13 — OBSERVABILITY
+════════════════════════════════════════════ -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <h2>Observability</h2>
+  </div>
+
+  <pre><div class="code-header"><span class="code-lang">Python</span><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div></div><code><span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">AgentSpan</span>:
+    <span class="str">"""One span per agent execution. Nested inside workflow trace."""</span>
+    span_id:       str
+    trace_id:      str        <span class="cm"># = execution_id (workflow-level trace)</span>
+    tenant_id:     str
+    agent_name:    str
+    prompt_version: str
+    input_tokens:  int
+    output_tokens: int
+    latency_ms:    int
+    tool_calls:    List[str]
+    retry_count:   int
+    status:        str
+    eval_scores:   Dict       <span class="cm"># hallucination, groundedness, relevancy</span>
+    cost_usd:      float
+
+
+<span class="kw">class</span> <span class="cls">ObservabilityService</span>:
+    <span class="kw">def</span> <span class="dec">record_span</span>(self, span: AgentSpan):
+        <span class="cm"># 1. Push to distributed tracing backend (Jaeger / Datadog / OTLP)</span>
+        self._tracer.emit(span)
+        <span class="cm"># 2. Increment Prometheus counters / histograms</span>
+        self._metrics.record({
+            <span class="str">"agent_latency_ms"</span>:    (span.agent_name, span.latency_ms),
+            <span class="str">"agent_token_cost"</span>:    (span.agent_name, span.cost_usd),
+            <span class="str">"agent_retry_total"</span>:   (span.agent_name, span.retry_count),
+        })
+        <span class="cm"># 3. Write eval scores to eval store for offline analysis</span>
+        self._eval_store.write(span.trace_id, span.eval_scores)
+
+    <span class="kw">def</span> <span class="dec">record_token_usage</span>(self, tenant_id, tokens, cost_usd):
+        <span class="cm"># Enforce monthly_token_budget from TenantConfig</span>
+        used = self._budget_store.increment(tenant_id, tokens, cost_usd)
+        config = TenantRegistry().get(tenant_id)
+        <span class="kw">if</span> used > config.monthly_token_budget:
+            <span class="kw">raise</span> BudgetExceededError(f<span class="str">"Tenant {tenant_id} exceeded token budget"</span>)
+</code></pre>
+
+  <table>
+    <thead><tr><th>Signal</th><th>What we track</th><th>Backend</th></tr></thead>
+    <tbody>
+      <tr><td>Traces</td><td>execution_id, span_id, agent_name, latency, status</td><td>Jaeger / Datadog APM</td></tr>
+      <tr><td>Metrics</td><td>token usage, cost, retries, tool call count, latency p50/p95/p99</td><td>Prometheus + Grafana</td></tr>
+      <tr><td>Logs</td><td>agent input/output, prompt version, tool invocation, error detail</td><td>ELK / Loki</td></tr>
+      <tr><td>Eval scores</td><td>hallucination, groundedness, relevancy per agent per execution</td><td>Custom eval store (Postgres)</td></tr>
+      <tr><td>Cost tracking</td><td>USD per agent, per tenant, per model, per month</td><td>Postgres + budget enforcer</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 14 — DATABASE SCHEMA
+════════════════════════════════════════════ -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <h2>Database Schema</h2>
+  </div>
+
+  <div class="schema-grid">
+
+    <div class="schema-block">
+      <div class="schema-header">workflow</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">workflow_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag fk">FK · IDX</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">VARCHAR(128)</span></div>
+        <div class="field-row"><span class="field-name">version</span><span class="field-type">VARCHAR(16)</span></div>
+        <div class="field-row"><span class="field-name">definition</span><span class="field-type">JSONB</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+      </div>
+    </div>
+
+    <div class="schema-block">
+      <div class="schema-header">workflow_execution</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">execution_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">workflow_id</span><span class="field-type">UUID</span><span class="field-flag fk">FK</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">VARCHAR(20)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">checkpoint_id</span><span class="field-type">VARCHAR(256)</span></div>
+        <div class="field-row"><span class="field-name">start_time</span><span class="field-type">TIMESTAMPTZ</span></div>
+        <div class="field-row"><span class="field-name">end_time</span><span class="field-type">TIMESTAMPTZ</span></div>
+      </div>
+    </div>
+
+    <div class="schema-block">
+      <div class="schema-header">agent_execution</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">agent_exec_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">execution_id</span><span class="field-type">UUID</span><span class="field-flag fk">FK · IDX</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">agent_name</span><span class="field-type">VARCHAR(64)</span></div>
+        <div class="field-row"><span class="field-name">prompt_version</span><span class="field-type">VARCHAR(16)</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">VARCHAR(20)</span></div>
+        <div class="field-row"><span class="field-name">input</span><span class="field-type">JSONB</span></div>
+        <div class="field-row"><span class="field-name">output</span><span class="field-type">JSONB</span></div>
+        <div class="field-row"><span class="field-name">retry_count</span><span class="field-type">SMALLINT</span></div>
+        <div class="field-row"><span class="field-name">latency_ms</span><span class="field-type">INTEGER</span></div>
+      </div>
+    </div>
+
+    <div class="schema-block">
+      <div class="schema-header">tool_execution</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">tool_exec_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">agent_exec_id</span><span class="field-type">UUID</span><span class="field-flag fk">FK</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">tool_name</span><span class="field-type">VARCHAR(64)</span></div>
+        <div class="field-row"><span class="field-name">params</span><span class="field-type">JSONB</span></div>
+        <div class="field-row"><span class="field-name">result</span><span class="field-type">JSONB</span></div>
+        <div class="field-row"><span class="field-name">cached</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">latency_ms</span><span class="field-type">INTEGER</span></div>
+      </div>
+    </div>
+
+    <div class="schema-block">
+      <div class="schema-header">memory</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">memory_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">user_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">role</span><span class="field-type">VARCHAR(16)</span></div>
+        <div class="field-row"><span class="field-name">content</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">embedding_id</span><span class="field-type">VARCHAR(128)</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+        <div class="field-row"><span class="field-name">expires_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+      </div>
+    </div>
+
+    <div class="schema-block">
+      <div class="schema-header">prompt_registry</div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">prompt_id</span><span class="field-type">UUID</span><span class="field-flag pk">PK</span></div>
+        <div class="field-row"><span class="field-name">agent_name</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">VARCHAR(64)</span><span class="field-flag idx">IDX</span></div>
+        <div class="field-row"><span class="field-name">version</span><span class="field-type">VARCHAR(16)</span></div>
+        <div class="field-row"><span class="field-name">template</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">traffic_split</span><span class="field-type">FLOAT</span></div>
+        <div class="field-row"><span class="field-name">is_active</span><span class="field-type">BOOLEAN</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 15 — SEQUENCE DIAGRAM
+════════════════════════════════════════════ -->
+<div class="section" id="s15">
+  <div class="section-header">
+    <span class="section-num">15</span>
+    <h2>End-to-End Sequence Diagram</h2>
+  </div>
+
+  <div class="flow-box">User          API GW        Orchestrator     Planner     Retrieval+Analytics    Summarizer     Memory
+  │               │                 │               │              │                  │              │
+  │─ POST /exec ──▶│                 │               │              │                  │              │
+  │               │─ auth+route ────▶│               │              │                  │              │
+  │               │                 │─ build ctx ──▶│              │                  │              │
+  │               │                 │               │─ execute() ──▶              │              │
+  │               │                 │               │── read memory ─────────────────────────────▶│
+  │               │                 │               │◀─ history ─────────────────────────────────│
+  │               │                 │               │─ LLM.complete()             │              │
+  │               │                 │               │◀─ plan {}                   │              │
+  │               │                 │◀─ AgentMsg ──│              │                  │              │
+  │               │                 │─ checkpoint ──────────────────────────────────────────────────▶DB
+  │               │                 │                              │ parallel tier    │              │
+  │               │                 │──────────────────────────────▶─ execute() ──────▶              │
+  │               │                 │                              │─ tool calls      │              │
+  │               │                 │                              │◀─ results        │              │
+  │               │                 │◀─────────────────────────────AgentMsg x2 ───────              │
+  │               │                 │─ checkpoint ──────────────────────────────────────────────────▶DB
+  │               │                 │────────────────────────────────────────────────▶─ execute()   │
+  │               │                 │                                                │─ write mem ──▶│
+  │               │                 │◀───────────────────────────────────────────────AgentMsg        │
+  │               │                 │─ status=COMPLETED                                             │
+  │               │◀─ 200 response ─│               │              │                  │              │</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     SECTION 16 — PRINCIPAL-LEVEL ENHANCEMENTS
+════════════════════════════════════════════ -->
+<div class="section" id="s16">
+  <div class="section-header">
+    <span class="section-num">16</span>
+    <h2>Principal-Level Enhancements</h2>
+  </div>
+
+  <p>These are the additions that signal <strong>production experience</strong> rather than theoretical design.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <span class="card-badge badge-blue">RESILIENCE</span>
+      <div class="card-title">State machine execution</div>
+      <div class="card-sub">PENDING → RUNNING → WAITING → RETRYING → COMPLETED / FAILED. Enables long-running workflows, human gates, and precise crash recovery.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-teal">COST</span>
+      <div class="card-title">Cost-based LLM routing</div>
+      <div class="card-sub">TaskComplexityClassifier routes simple tasks to small models and complex tasks to frontier models. Reduces cost 40–70% on typical workloads.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-amber">HUMAN-IN-LOOP</span>
+      <div class="card-title">Human approval nodes</div>
+      <div class="card-sub">is_human_approval=True on any AgentNode pauses execution and emits an event. Workflow resumes on approval webhook, rejects trigger fallback path.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-purple">DISCOVERY</span>
+      <div class="card-title">Capability-based agent selection</div>
+      <div class="card-sub">registry.find_by_capability("rag") dynamically selects agents at runtime. Enables self-healing workflows that find alternatives when a preferred agent is unavailable.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-blue">SECURITY</span>
+      <div class="card-title">Prompt injection defense</div>
+      <div class="card-sub">Tool outputs sanitized before entering LLM context. User input wrapped in structured delimiters. JSON Schema validation on every agent input boundary.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-teal">QUALITY</span>
+      <div class="card-title">Per-execution eval scores</div>
+      <div class="card-sub">Hallucination, groundedness, and relevancy scored per agent span. Stored in eval store for offline analysis, A/B prompt comparison, and regression detection.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-amber">VERSIONING</span>
+      <div class="card-title">Prompt registry + A/B testing</div>
+      <div class="card-sub">Prompts versioned per (agent, tenant). Traffic split enables canary rollouts. Roll back a bad prompt in one API call without redeployment.</div>
+    </div>
+    <div class="card">
+      <span class="card-badge badge-purple">SCALE</span>
+      <div class="card-title">Per-tenant concurrency control</div>
+      <div class="card-sub">asyncio.Semaphore per tenant caps concurrent workflows. Prevents one tenant's traffic spike from degrading latency for all others (noisy-neighbour isolation).</div>
+    </div>
+  </div>
+
+  <h3>Closing summary</h3>
+  <div class="callout callout-teal">
+    <span class="callout-label">5-minute whiteboard summary</span>
+    The system is an <strong>Orchestrator</strong> executing tenant-configured workflow DAGs tier by tier, with parallel execution within each tier. <strong>Agents</strong> are stateless workers registered in an AgentRegistry; they communicate via typed <strong>AgentMessage</strong> contracts validated at every boundary. <strong>Tools</strong> plug in dynamically through a ToolRegistry with RBAC, timeouts, rate limiting, and result caching. <strong>Memory</strong> is externalized into three tiers: Redis (short-term), Postgres (long-term), and Vector DB (semantic). Execution is <strong>event-driven</strong> via Kafka with retries, fallbacks, checkpointing, and full observability. <strong>Multi-tenancy</strong> is enforced at config, storage, concurrency, tool, and memory layers. This scales from simple agent workflows to enterprise agentic platforms comparable to LangGraph Platform or AutoGen Studio.
+  </div>
+</div>
+
+<div class="footer">
+  AI Agent Orchestration Framework — Complete LLD &nbsp;·&nbsp; Principal AI Engineer Interview Reference
+</div>
+
+</div>
+</body>
+</html>
